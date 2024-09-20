@@ -1,0 +1,62 @@
+name: Build and Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Runs when changes are pushed to the main branch
+
+jobs:
+  build_navigation_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the repository
+    - name: Checkout Repository
+      uses: actions/checkout@v4.1.5
+
+    # Step 2: Clone the remote `nameless-and-blameless/TAG` repository
+    - name: Clone Reports Repository
+      run: |
+        git clone https://github.com/nameless-and-blameless/TAG.git
+        cp -r TAG/reports/ ./reports/
+
+    # Step 3: Generate navigation.md
+    - name: Generate navigation.md
+      run: |
+        # Create the includes directory if it doesn't exist
+        mkdir -p ./includes
+
+        # Initialize the navigation.md file
+        echo "" > ./includes/navigation.md
+
+        # Iterate over each markdown file in the reports directory
+        for file in ./reports/*.md; do
+          # Extract the first header (# Title) from each markdown file
+          title=$(grep '^# ' "$file" | head -n 1 | sed 's/# //')
+
+          # Get the filename
+          filename=$(basename "$file")
+
+          # Append the link to the navigation.md in the GitHub wiki format
+          echo "[[$title|reports/$filename]]" >> ./includes/navigation.md
+        done
+
+        # Sort the links alphabetically
+        sort ./includes/navigation.md -o ./includes/navigation.md
+
+    # Step 4: Commit changes to the main branch
+    - name: Commit and Push Changes
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add ./includes/navigation.md
+        git commit -m "Update navigation.md"
+        git push
+
+    # Step 5: Deploy to GitHub Pages
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .  # Specify the directory to publish (root for this case)
+        publish_branch: gh-pages  # Deploy to `gh-pages` branch
