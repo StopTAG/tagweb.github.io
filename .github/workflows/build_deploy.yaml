@@ -1,13 +1,12 @@
-name: Build and Deploy GitHub Pages
+name: Build Navigation
 
 on:
   push:
     branches:
       - main  # Runs when changes are pushed to the main branch
-  workflow_dispatch:
 
 jobs:
-  build_navigation_and_deploy:
+  build_navigation:
     runs-on: ubuntu-latest
 
     steps:
@@ -53,11 +52,3 @@ jobs:
         git add ./includes/navigation.md
         git commit -m "Update navigation.md"
         git push
-
-    # Step 5: Deploy to GitHub Pages
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: .  # Specify the directory to publish (root for this case)
-        publish_branch: gh-pages  # Deploy to `gh-pages` branch
